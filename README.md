@@ -1,4 +1,4 @@
-# 📖 Bhagavad Gita Insights - Emotion-Based Verse Recommender
+# 📖 Bhagavad Gita Insights Emotion Based Verse Recommender
 
 A machine learning project that analyzes your feelings and recommends relevant verses from the Bhagavad Gita to provide guidance and wisdom.
 
