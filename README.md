@@ -19,14 +19,6 @@ This project uses **emotion detection** combined with **K-Nearest Neighbors (KNN
 
 ---
 
-## 📂 Project Structure
-
-```
-├── data.xlsx          # Dataset containing 700 Bhagavad Gita verses with emotion tags
-├── project.py         # Main script
-└── README.md          # Documentation
-```
-
 ### Dataset Columns (`data.xlsx`)
 
 | Column | Description |
