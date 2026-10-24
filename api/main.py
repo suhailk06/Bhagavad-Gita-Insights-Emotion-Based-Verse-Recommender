@@ -5,10 +5,12 @@ from fastapi.templating import Jinja2Templates
 import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.neighbors import KNeighborsClassifier
+from fastapi.staticfiles import StaticFiles
 
 BASE_DIR = Path(__file__).resolve().parent
 
 app = FastAPI(title="Bhagavad Gita Insights")
+app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
 
@@ -96,7 +98,7 @@ def home(request: Request):
 @app.post("/")
 async def submit_content(request: Request, content: str = Form("")):
     scores, prediction = solve(content)
-    return RedirectResponse(
+    return templates.TemplateResponse(
         request,
         "content.html",
         {

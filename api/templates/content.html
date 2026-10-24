@@ -1,28 +1,49 @@
-<!DOCTYPE html>
-<!--[if lt IE 7]>      <html class="no-js lt-ie9 lt-ie8 lt-ie7"> <![endif]-->
-<!--[if IE 7]>         <html class="no-js lt-ie9 lt-ie8"> <![endif]-->
-<!--[if IE 8]>         <html class="no-js lt-ie9"> <![endif]-->
-<!--[if gt IE 8]>      <html class="no-js"> <!--<![endif]-->
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title></title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="stylesheet" href="">
-        <style>
-            body {
-                color:white;
-                background-color: black;
-            }
-        </style>
-    </head>
-    <body>
-        <p>Content: {{ content }}</p>
-<p>Detected tags: {{ scores }}</p>
-<p>Prediction: {{ prediction }}</p>
-        
-        <script src="" async defer></script>
-    </body>
-</html>
+{% extends "base.html" %}
+{% block content %}
+<div class="page">
+  <div class="container">
+    <p><strong>Your Feeling:</strong><br> {{ content }}</p><br>
+    <p><strong>Sanskrit Anuvad:</strong><br> {{ prediction[0] }}</p>
+    <p><strong>Hindi Anuvad:</strong><br> {{ prediction[1] }}</p>
+    <p><strong>English Translation:</strong><br> {{ prediction[2] }}</p>
+    <p><strong>Simple English Explanation:</strong><br> {{ prediction[3] }}</p>
+  </div>
+  <a href="{{ url_for('home') }}" class="back-button">← Back</a>
+</div>
+<style>
+body {
+  margin: 0;
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+a {
+  color: white;
+  background-color: black;
+  border: 1px solid white;
+  padding: 5px 10px;
+  border-radius: 25px;
+  text-decoration: none;
+}
+.page {
+  width: 100%;
+  display: flex;
+  flex-direction: column;   /* stack container + button vertically */
+  align-items: center;      /* keep them centered horizontally */
+  gap: 20px;                /* space between card and button */
+}
+.container {
+  width: 100%;
+  max-width: 520px;
+  padding: 40px 36px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.65);
+  border-radius: 20px;
+}
+</style>
+{% endblock %}
