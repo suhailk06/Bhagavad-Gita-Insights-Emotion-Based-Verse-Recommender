@@ -91,7 +91,6 @@ def analyze(sentence: str) -> dict[str, int]:
 
 
 def tags_to_vector(scores: dict[str, int]) -> list[int]:
-    # Important: this order must match the dataset feature-column order.
     return [scores[tag] for tag in TAGS]
 
 
