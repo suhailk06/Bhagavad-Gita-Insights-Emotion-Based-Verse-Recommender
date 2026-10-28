@@ -1,50 +1,42 @@
 {% extends "base.html" %}
+
 {% block content %}
 <div class="page">
   <div class="container">
-    <p><strong>Your Feeling:</strong><br> {{ content }}</p><br>
-    <p><strong>Sanskrit Anuvad:</strong><br> {{ prediction[0] }}</p>
-    <p><strong>Hindi Anuvad:</strong><br> {{ prediction[1] }}</p>
-    <p><strong>English Translation:</strong><br> {{ prediction[2] }}</p>
-    <p><strong>Simple English Explanation:</strong><br> {{ prediction[3] }}</p>
-    <p><strong>Solution:</strong><br> {{ prediction[4] }}</p>
+    <h1>Gita Wisdom</h1>
+    <p class="subtitle">Guidance based on your feelings</p>
+
+    <dl class="insights">
+      <div class="insight">
+        <dt>Your Feeling</dt>
+        <dd>{{ content }}</dd>
+      </div>
+
+      <div class="insight">
+        <dt>Sanskrit Anuvad</dt>
+        <dd class="devanagari">{{ prediction[0] }}</dd>
+      </div>
+
+      <div class="insight">
+        <dt>Hindi Anuvad</dt>
+        <dd class="devanagari">{{ prediction[1] }}</dd>
+      </div>
+
+      <div class="insight">
+        <dt>English Translation</dt>
+        <dd>{{ prediction[2] }}</dd>
+      </div>
+
+      <div class="insight">
+        <dt>Solution</dt>
+        {% for i in solutions %}
+          <h3>{{ i }}</h3>
+          <dd>{{ solutions[i] }}</dd>
+        {% endfor %}
+      </div>
+    </dl>
   </div>
-  <a href="{{ url_for('home') }}" class="back-button">← Back</a>
+
+  <a href="{{ url_for('home') }}" class="back-button">← Back to Input</a>
 </div>
-<style>
-body {
-  margin: 0;
-  min-height: 100vh;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-}
-a {
-  color: white;
-  background-color: black;
-  border: 1px solid white;
-  padding: 5px 10px;
-  border-radius: 25px;
-  text-decoration: none;
-}
-.page {
-  width: 100%;
-  display: flex;
-  flex-direction: column;   /* stack container + button vertically */
-  align-items: center;      /* keep them centered horizontally */
-  gap: 20px;                /* space between card and button */
-}
-.container {
-  width: 100%;
-  max-width: 520px;
-  padding: 40px 36px;
-  text-align: center;
-  background: rgba(255, 255, 255, 0.3);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.65);
-  border-radius: 20px;
-}
-</style>
 {% endblock %}

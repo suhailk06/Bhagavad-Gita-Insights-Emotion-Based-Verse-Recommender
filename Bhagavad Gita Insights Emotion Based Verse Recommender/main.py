@@ -1,5 +1,5 @@
 from pathlib import Path
-
+import re
 from fastapi import FastAPI, Request, Form
 from fastapi.templating import Jinja2Templates
 import pandas as pd
@@ -77,16 +77,74 @@ TAGS = {
                      "all by myself", "isolated", "nobody cares", "invisible", "no text messages"],
 }
 
+SOLUTIONS = {
+    "angry": "Pause and take 3 deep breaths before reacting. Step away from the situation, let your body cool down, and then express your feelings calmly using 'I' statements.",
+    
+    "sad": "Allow yourself to feel it without judgment. Talk to someone you trust, cry if you need to, and do one small comforting thing like taking a warm shower or listening to calm music.",
+    
+    "fear": "Ground yourself in the present moment by naming 5 things you can see and 4 things you can touch. Ask yourself: 'Is this danger real right now, or is it just a worry?'",
+    
+    "confused": "Write down everything that is in your head on a piece of paper. Break the big problem into smaller, bite-sized pieces and focus only on the very next step.",
+    
+    "stressed": "Stop multitasking and pick just one task. Do a quick physical stretch, drink a glass of water, and remember you don't have to fix everything all at once.",
+    
+    "demotivated": "Lower the bar completely. Tell yourself you only need to work on the task for 2 minutes. Often, just starting is enough to build a tiny bit of momentum.",
+    
+    "guilt": "Acknowledge what went wrong, apologize or make amends if you can, and then consciously forgive yourself. Learn the lesson and let the heavy baggage go.",
+    
+    "attachment": "Shift your focus back to yourself. Invest your time into your own hobbies, friends, and personal goals so your happiness comes from within, not just one source.",
+    
+    "failure": "Separate your self-worth from the outcome. Treat this as data or feedback rather than a permanent label, and ask: 'What can I adjust and try differently next time?'",
+    
+    "relationship": "Communicate your feelings honestly and openly without playing blame games. Listen actively to the other person, and set healthy boundaries if needed.",
+    
+    "greed": "Practice gratitude daily by writing down three things you already have. Remind yourself that peace and contentment come from appreciating the present, not collecting more.",
+    
+    "purpose": "Stop searching for a grand, massive destiny. Instead, focus on doing small, meaningful acts of kindness or curiosity today—purpose is built one small step at a time.",
+    
+    "ego": "Practice humility by actively listening to someone else's perspective without interrupting. Remind yourself that making mistakes is normal and doesn't lower your worth.",
+    
+    "decision": "Flip a coin. While it's in the air, you will often suddenly realize which outcome you are secretly hoping for. If not, pick the best option available and trust that you can adapt.",
+    
+    "loneliness": "Reach out to a friend or family member, even with a simple text message. Alternatively, try doing a public activity you enjoy, like going to a café or a library, to feel connected to the world around you."
+}
+
 
 def normalize(text: str) -> str:
     return text.lower().replace("'", "").replace("’", "")
 
 
+list_solutions=[]
+# def analyze(sentence: str) -> dict[str, int]:
+#     sentence = normalize(sentence)
+#     scores = {}
+#     for tag, keywords in TAGS.items():
+#         scores[tag] = int(any(kw in sentence for kw in keywords))
+#         if scores[tag] > 0:
+#             print(scores)
+#     return scores
+
+
+
 def analyze(sentence: str) -> dict[str, int]:
     sentence = normalize(sentence)
     scores = {}
+    
     for tag, keywords in TAGS.items():
-        scores[tag] = int(any(kw in sentence for kw in keywords))
+        matched = False
+        for kw in keywords:
+            if " " in kw:
+                # If the keyword is a multi-word phrase, check substring match
+                if kw in sentence:
+                    matched = True
+                    break
+            else:
+                # If it's a single word, ensure it matches as a whole word to prevent false positives
+                if re.search(r'\b' + re.escape(kw) + r'\b', sentence):
+                    matched = True
+                    break
+        scores[tag] = int(matched)
+        
     return scores
 
 
@@ -98,7 +156,7 @@ def load_model():
     dataset = pd.read_excel(BASE_DIR / "dataset.xlsx")
     X_df = dataset.iloc[:, 9:].apply(pd.to_numeric, errors="coerce").fillna(0)
     X = X_df.values
-    Y = dataset.iloc[:, 4:9].astype(str).values
+    Y = dataset.iloc[:, 4:7].astype(str).values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     classifier = KNeighborsClassifier(n_neighbors=1, metric="minkowski", p=2)
@@ -124,17 +182,19 @@ def solve(text: str):
     if hasattr(prediction, "tolist"):
         prediction = prediction.tolist()
 
-    return scores, prediction
+    # Extract human-readable actionable solutions based on detected emotions
+    matched_solutions = {
+        tag: SOLUTIONS[tag]
+        for tag, score in scores.items()
+        if score > 0 and tag in SOLUTIONS
+    }
 
-
-@app.get("/")
-def home(request: Request):
-    return templates.TemplateResponse(request, "home.html")
+    return scores, prediction, matched_solutions
 
 
 @app.post("/")
 async def submit_content(request: Request, content: str = Form("")):
-    scores, prediction = solve(content)
+    scores, prediction, solutions = solve(content)
     return templates.TemplateResponse(
         request,
         "content.html",
@@ -142,5 +202,13 @@ async def submit_content(request: Request, content: str = Form("")):
             "content": content,
             "scores": scores,
             "prediction": prediction,
+            "solutions": solutions,
         },
     )
+
+
+@app.get("/")
+def home(request: Request):
+    return templates.TemplateResponse(request, "home.html")
+
+

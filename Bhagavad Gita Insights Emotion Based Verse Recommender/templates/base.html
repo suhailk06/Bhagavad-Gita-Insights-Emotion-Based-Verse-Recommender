@@ -1,23 +1,332 @@
 <!DOCTYPE html>
-<html>
-    <head>
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <title>{% block title %}My App{% endblock %}</title>
-        <meta name="description" content="">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <style>
-            body {
-                background-image: url("/static/images/background.jpg");
-                background-size: cover;
-                background-position: center;
-                background-repeat: no-repeat;
-                min-height: 100vh;
-                margin: 0;
-            }
-        </style>
-    </head>
-    <body>
-        {% block content %}{% endblock %}
-    </body>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}Bhagavad Gita Insights{% endblock %}</title>
+  <meta name="description" content="Reflect on your feelings through the wisdom of the Bhagavad Gita.">
+
+  <!-- Google Fonts for Typography & Devanagari Script -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* =========================================================
+       1. DESIGN TOKENS
+       ========================================================= */
+    :root {
+      --ink:          #1c1917;
+      --ink-soft:     #44403c;
+      --muted:        #78716c;
+      --accent:       #d97706;
+      --accent-deep:  #b45309;
+
+      --surface:        rgba(255, 255, 255, 0.72);
+      --surface-strong: rgba(255, 255, 255, 0.90);
+      --border:         rgba(255, 255, 255, 0.80);
+      --divider:        rgba(28, 25, 23, 0.08);
+
+      --radius-lg:   24px;
+      --radius-md:   14px;
+      --radius-pill: 999px;
+
+      --shadow-lg: 0 24px 60px -28px rgba(28, 25, 23, 0.45);
+      --shadow-sm: 0 2px 8px rgba(28, 25, 23, 0.06);
+
+      --ring: 0 0 0 4px rgba(217, 119, 6, 0.25);
+      --ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+
+      --font-body: "Inter", system-ui, -apple-system, sans-serif;
+      --font-deva: "Noto Sans Devanagari", "Nirmala UI", "Mangal", sans-serif;
+    }
+
+    /* =========================================================
+       2. RESET & PAGE SHELL
+       ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; }
+
+    html { -webkit-text-size-adjust: 100%; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      min-height: 100dvh;
+      padding: clamp(1.25rem, 4vw, 2.5rem);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+
+      font-family: var(--font-body);
+      font-size: 1rem;
+      line-height: 1.6;
+      color: var(--ink);
+
+      background-color: #2b1f1d;
+      background-image:
+        linear-gradient(
+          180deg,
+          rgba(28, 25, 23, 0.65) 0%,
+          rgba(28, 25, 23, 0.40) 50%,
+          rgba(28, 25, 23, 0.75) 100%
+        ),
+        url("/static/images/background.jpg");
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+    }
+
+    ::selection { background: rgba(217, 119, 6, 0.28); }
+
+    /* =========================================================
+       3. LAYOUT
+       ========================================================= */
+    .page {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.25rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 560px;
+      padding: clamp(1.75rem, 5vw, 2.75rem) clamp(1.25rem, 5vw, 2.5rem);
+      text-align: center;
+
+      background: var(--surface);
+      -webkit-backdrop-filter: blur(16px) saturate(140%);
+      backdrop-filter: blur(16px) saturate(140%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+
+      animation: rise 0.45s var(--ease) both;
+    }
+
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* =========================================================
+       4. TYPOGRAPHY
+       ========================================================= */
+    h1 {
+      margin: 0 0 0.5rem;
+      font-size: clamp(1.6rem, 5vw, 2.2rem);
+      line-height: 1.2;
+      font-weight: 700;
+      letter-spacing: -0.025em;
+
+      color: var(--accent-deep);
+      background: linear-gradient(120deg, #1c1917 15%, #b45309 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .subtitle {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--muted);
+    }
+
+    /* =========================================================
+       5. FORM
+       ========================================================= */
+    .feeling-form {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1.75rem;
+      text-align: left;
+    }
+
+    label {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    input[type="text"],
+    textarea {
+      width: 100%;
+      padding: 0.9rem 1rem;
+      font: inherit;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.95);
+      border: 1.5px solid #e7e5e4;
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.2s var(--ease), box-shadow 0.2s var(--ease);
+    }
+
+    input::placeholder { color: #a8a29e; }
+    input:hover { border-color: #d6d3d1; }
+
+    input:focus,
+    input:focus-visible {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: var(--ring);
+      background: #ffffff;
+    }
+
+    /* =========================================================
+       6. BUTTONS
+       ========================================================= */
+    button,
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      width: 100%;
+
+      padding: 0.9rem 1.25rem;
+      font: inherit;
+      font-weight: 600;
+      color: #fff;
+
+      background: linear-gradient(135deg, #292524, #1c1917);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+
+      box-shadow: 0 10px 20px -8px rgba(28, 25, 23, 0.5);
+      transition: transform 0.15s var(--ease),
+                  box-shadow 0.2s var(--ease),
+                  filter 0.2s var(--ease);
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+      box-shadow: 0 14px 24px -10px rgba(28, 25, 23, 0.6);
+    }
+
+    button:active {
+      transform: translateY(0);
+      box-shadow: 0 6px 12px -6px rgba(28, 25, 23, 0.5);
+    }
+
+    button:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+
+    /* =========================================================
+       7. BACK BUTTON (pill)
+       ========================================================= */
+    .back-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+
+      padding: 0.65rem 1.25rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--ink);
+      text-decoration: none;
+
+      background: var(--surface-strong);
+      -webkit-backdrop-filter: blur(8px);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-sm);
+
+      transition: transform 0.15s var(--ease),
+                  background 0.2s var(--ease),
+                  box-shadow 0.2s var(--ease);
+    }
+
+    .back-button:hover {
+      background: #ffffff;
+      transform: translateX(-3px);
+      box-shadow: 0 8px 18px -8px rgba(28, 25, 23, 0.4);
+    }
+
+    .back-button:focus-visible {
+      outline: none;
+      box-shadow: var(--ring);
+    }
+
+    /* =========================================================
+       8. RESULT PILL & INSIGHT LIST
+       ========================================================= */
+    .result {
+      margin: 1.25rem 0 0;
+      padding: 0.75rem 1rem;
+      font-size: 0.9rem;
+      color: var(--ink-soft);
+      background: rgba(217, 119, 6, 0.12);
+      border: 1px solid rgba(217, 119, 6, 0.25);
+      border-radius: var(--radius-md);
+    }
+
+    .insights {
+      margin: 1.5rem 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 0.875rem;
+      text-align: left;
+    }
+
+    .insight {
+      padding: 1rem 1.15rem;
+      background: var(--surface-strong);
+      border: 1px solid var(--divider);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .insight dt {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--accent-deep);
+    }
+
+    .insight dd {
+      margin: 0.35rem 0 0;
+      font-size: 0.98rem;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .insight dd.devanagari {
+      font-family: var(--font-deva);
+      font-size: 1.15rem;
+      line-height: 1.7;
+    }
+
+    /* =========================================================
+       9. RESPONSIVE & ACCESSIBILITY
+       ========================================================= */
+    @media (max-width: 640px) {
+      body { background-attachment: scroll; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+
+  {% block head %}{% endblock %}
+</head>
+<body>
+  {% block content %}{% endblock %}
+</body>
 </html>
