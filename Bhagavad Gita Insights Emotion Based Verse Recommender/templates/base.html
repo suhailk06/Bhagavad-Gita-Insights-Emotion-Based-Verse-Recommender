@@ -322,11 +322,171 @@
         transition-duration: 0.01ms !important;
       }
     }
+
+    /* =========================================================
+       10. BACKGROUND MUSIC TOGGLE
+       ========================================================= */
+    .music-toggle {
+      position: fixed;
+      right: clamp(0.75rem, 3vw, 1.5rem);
+      bottom: clamp(0.75rem, 3vw, 1.5rem);
+      z-index: 50;
+
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+
+      width: auto;
+      min-width: 44px;
+      min-height: 44px;
+      padding: 0.6rem 1rem;
+
+      font: inherit;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--ink);
+
+      background: var(--surface-strong);
+      -webkit-backdrop-filter: blur(12px) saturate(140%);
+      backdrop-filter: blur(12px) saturate(140%);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-pill);
+      box-shadow: var(--shadow-lg);
+      cursor: pointer;
+
+      transition: transform 0.15s var(--ease),
+                  background 0.2s var(--ease),
+                  box-shadow 0.2s var(--ease);
+    }
+
+    .music-toggle:hover  { background: #ffffff; transform: translateY(-2px); }
+    .music-toggle:active { transform: translateY(0); }
+    .music-toggle:focus-visible { outline: none; box-shadow: var(--ring); }
+
+    .music-toggle .icon  { font-size: 1.05rem; line-height: 1; }
+    .music-toggle .label { display: none; }
+
+    @media (min-width: 480px) {
+      .music-toggle .label { display: inline; }
+    }
+
+    /* gentle pulse while muted, to hint there's music available */
+    .music-toggle[data-state="muted"] { animation: musicHint 3.2s ease-in-out infinite; }
+
+    @keyframes musicHint {
+      0%, 100% { box-shadow: var(--shadow-lg); }
+      50%      { box-shadow: 0 0 0 6px rgba(217, 119, 6, 0.12), var(--shadow-lg); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .music-toggle[data-state="muted"] { animation: none; }
+    }
   </style>
 
   {% block head %}{% endblock %}
 </head>
 <body>
+  <!-- Background music: starts muted (browser-safe), user un-mutes via the button -->
+  <audio id="bg-music"
+         src="/static/audio/background.mp3"
+         loop
+         muted
+         preload="auto"
+         playsinline
+         aria-hidden="true"></audio>
+
+  <button type="button"
+          id="music-toggle"
+          class="music-toggle"
+          data-state="muted"
+          aria-pressed="false"
+          aria-label="Unmute background music">
+    <span class="icon" aria-hidden="true">🔇</span>
+    <span class="label">Music off</span>
+  </button>
+
   {% block content %}{% endblock %}
+
+  <script>
+  (function () {
+    'use strict';
+
+    var audio = document.getElementById('bg-music');
+    var btn   = document.getElementById('music-toggle');
+    if (!audio || !btn) return;
+
+    var KEY = 'bgMusicState';
+    var store = null;
+    try {                       // sessionStorage may be blocked in private modes
+      window.sessionStorage.setItem('__probe', '1');
+      window.sessionStorage.removeItem('__probe');
+      store = window.sessionStorage;
+    } catch (e) { store = null; }
+
+    function readState() {
+      if (!store) return {};
+      try { return JSON.parse(store.getItem(KEY) || '{}') || {}; } catch (e) { return {}; }
+    }
+    function writeState(patch) {
+      if (!store) return;
+      var s = readState();
+      for (var k in patch) s[k] = patch[k];
+      try { store.setItem(KEY, JSON.stringify(s)); } catch (e) {}
+    }
+
+    var state = readState();
+    audio.muted = state.muted !== false;   // default: muted (browser-safe)
+
+    function paint() {
+      var muted = audio.muted;
+      btn.dataset.state = muted ? 'muted' : 'playing';
+      btn.setAttribute('aria-pressed', String(!muted));
+      btn.setAttribute('aria-label', muted ? 'Unmute background music' : 'Mute background music');
+      btn.querySelector('.icon').textContent  = muted ? '🔇' : '🔊';
+      btn.querySelector('.label').textContent = muted ? 'Music off' : 'Music on';
+    }
+
+    function attemptPlay() {
+      var p = audio.play();
+      if (p && typeof p.catch === 'function') p.catch(function () { /* blocked until gesture */ });
+    }
+
+    // ---- Resume where the last page left off, so it feels continuous ----
+    function restoreTime() {
+      var t = state.time;
+      if (typeof t !== 'number' || !isFinite(t) || t <= 0) return;
+      try { audio.currentTime = t; } catch (e) {}
+    }
+    if (audio.readyState >= 1) restoreTime();
+    else audio.addEventListener('loadedmetadata', restoreTime, { once: true });
+
+    attemptPlay();
+    paint();
+
+    // ---- Fallback: if muted autoplay is still blocked, start on first gesture ----
+    ['pointerdown', 'keydown', 'touchstart'].forEach(function (evt) {
+      document.addEventListener(evt, attemptPlay, { once: true, passive: true });
+    });
+
+    // ---- Mute / unmute ----
+    btn.addEventListener('click', function () {
+      audio.muted = !audio.muted;
+      if (!audio.muted) attemptPlay();
+      writeState({ muted: audio.muted });
+      paint();
+    });
+
+    // ---- Remember playback position before the page is torn down ----
+    function persist() {
+      writeState({ muted: audio.muted, time: audio.currentTime || 0 });
+    }
+    window.addEventListener('pagehide', persist);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') persist();
+    });
+    setInterval(persist, 5000);
+  })();
+  </script>
 </body>
 </html>
