@@ -12,40 +12,19 @@
         <dd>{{ content }}</dd>
       </div>
 
-      <!-- Sanskrit Anuvad with Krishna Voice Button -->
       <div class="insight">
         <dt>Sanskrit Anuvad</dt>
         <dd class="devanagari">{{ prediction[0] }}</dd>
-        <div class="audio-player-box">
-          <audio controls>
-            <source src="{{ url_for('static', path='audio/sanskrit_voice.mp3') }}" type="audio/mp3">
-            Your browser does not support the audio element.
-          </audio>
-        </div>
       </div>
 
-      <!-- Hindi Anuvad with Krishna Voice Button -->
       <div class="insight">
         <dt>Hindi Anuvad</dt>
         <dd class="devanagari">{{ prediction[1] }}</dd>
-        <div class="audio-player-box">
-          <audio controls>
-            <source src="{{ url_for('static', path='audio/hindi_voice.mp3') }}" type="audio/mp3">
-            Your browser does not support the audio element.
-          </audio>
-        </div>
       </div>
 
-      <!-- English Translation with Krishna Voice Button -->
       <div class="insight">
         <dt>English Translation</dt>
         <dd>{{ prediction[2] }}</dd>
-        <div class="audio-player-box">
-          <audio controls>
-            <source src="{{ url_for('static', path='audio/english_voice.mp3') }}" type="audio/mp3">
-            Your browser does not support the audio element.
-          </audio>
-        </div>
       </div>
 
       <div class="insight">
@@ -60,15 +39,4 @@
 
   <a href="{{ url_for('home') }}" class="back-button">← Back to Input</a>
 </div>
-
-<style>
-  .audio-player-box {
-    margin-top: 10px;
-  }
-  .audio-player-box audio {
-    height: 32px;
-    width: 100%;
-    max-width: 280px;
-  }
-</style>
 {% endblock %}
