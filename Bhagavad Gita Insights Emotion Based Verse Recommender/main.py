@@ -13,74 +13,384 @@ app = FastAPI(title="Bhagavad Gita Insights")
 app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
 templates = Jinja2Templates(directory=str(BASE_DIR / "templates"))
 
-# Severity thresholds for relative intensity (tag_score / total_score)
-LOW_THRESHOLD = 0.34      # < 0.34  -> low
-HIGH_THRESHOLD = 0.67     # >= 0.67 -> high ; else medium
+LOW_THRESHOLD = 0.34
+HIGH_THRESHOLD = 0.67
+
 
 TAGS = {
-    "angry":        ["angry", "mad", "furious", "rage", "hate", "irritated", "annoyed", "frustrated",
-                     "pissed", "outraged", "bitter", "resentful", "hostile", "aggravated", "fuming",
-                     "seething", "infuriated", "livid", "fed up", "exasperated", "displeased",
-                     " pissed off", "triggered", "seeing red", "done with", "sick of", "blood boiling"],
-    "sad":          ["sad", "cry", "unhappy", "depressed", "down", "miserable", "tears", "hopeless",
-                     "grief", "heartbroken", "gloomy", "sorrow", "downcast", "upset", "blue",
-                     "devastated", "glum", "crestfallen", "heavy-hearted", "despair", "melancholy",
-                     "crying", "weeping", "low", "hurting", "heavy", "broken", "empty inside"],
-    "fear":         ["fear", "scared", "afraid", "terrified", "panic", "worried", "anxious", "nervous",
-                     "dread", "frightened", "jittery", "alarmed", "edgy", "paranoid", "phobia",
-                     "petrified", "threatened", "uneasy", "apprehensive", "timid", "dreading",
-                     "freaking out", "sweating", "stressed out", "what if", "doom", "scared to death"],
-    "confused":     ["confused", "lost", "unclear", "unsure", "puzzled", "dont know", "do not know",
-                     "no idea", "what to do", "cant figure", "perplexed", "baffled", "clueless", "mixed up",
-                     "disoriented", "befuddled", "muddled", "mystified", "turned around",
-                     "makes no sense", "completely lost", "head spinning", "over my head", "at a loss"],
-    "stressed":     ["stressed", "pressure", "overwhelmed", "burnout", "tension", "too much",
-                     "exam", "deadline", "no time", "running out", "strained", "swamped", "burdened", "frazzled",
-                     "cracked under", "stretched thin", "panicking", "hiccup", "chaotic", "pressurized",
-                     "drowning", "swimming in it", "cant breathe", "crushing", "piling up", "sanity"],
-    "demotivated":  ["demotivated", "lazy", "give up", "no energy", "unmotivated", "tired",
-                     "cant focus", "procrastinat", "exhausted", "apathy", "sluggish", "drained", "burned out", "lethargic",
-                     "uninspired", "stuck", "fatigued", "listless", "inert", "burnt out", "slump",
-                     "cant be bothered", "whats the point", "heavy limbs", "dragging", "zero drive"],
-    "guilt":        ["guilt", "guilty", "sorry", "blame", "regret", "my fault", "should have",
-                     "ashamed", "remorse", "conscience", "self-blame", "at fault", "penitent",
-                     "accountable", "regretting", "punishing myself", "bad conscience",
-                     "burden of proof", "haunted", "wish i hadn't", "shouldnt have", "my bad"],
-    "attachment":   ["attachment", "attached", "miss", "cling", "cant let go", "dependent", "obsessed",
-                     "holding on", "needy", "fixated", "codependent", "craving", "inseparable",
-                     "hooked", "reliant", "can't live without", "possessive",
-                     "stalking", "cant stop thinking", "addicted to them", "won't leave my mind"],
-    "failure":      ["failure", "failed", "loser", "not good enough", "useless", "worthless",
-                     "didnt start", "did not start", "didnt study", "did not study", "wasted",
-                     "inadequate", "disappointment", "incompetent", "flop", "ruined",
-                     "mess up", "messed up", "falling behind", "zero", "good for nothing",
-                     "total disaster", "screw up", "screwed up", "imposter", "cant do anything right"],
-    "relationship": ["relationship", "partner", "boyfriend", "girlfriend", "friend", "family",
-                     "love", "breakup", "crush", "spouse", "marriage", "husband", "wife", "dating", "ex",
-                     "significant other", "romance", "couple", "fiance", "colleague", "relative",
-                     "situationship", "talking stage", "toxic", "commitment", "cheating", "heartbreak"],
-    "greed":        ["greed", "greedy", "want more", "never enough", "selfish", "possessive",
-                     "materialistic", "covetous", "hoarding", "ambitious for more", "grasping",
-                     "insatiable", "gluttonous", "self-serving", "all mine", "stingy",
-                     "taking everything", "power hungry", "gimme", "unforgivingly rich"],
-    "purpose":      ["purpose", "meaning", "why am i", "goal", "direction", "lost in life",
-                     "pointless", "no point", "aimless", "directionless", "calling", "significance", "emptiness",
-                     "vacant", "what's the use", "whats the point", "no vision", "adrift", "stuck in life",
-                     "existential", "what am i doing", "walking dead", "void", "hollow"],
-    "ego":          ["ego", "pride", "arrogant", "superior", "i am right", "selfish",
-                     "hubris", "self-importance", "conceited", "boastful", "stubborn",
-                     "narcissistic", "know-it-all", "haughty", "vain", "full of myself", "egoistic",
-                     "high horse", "too proud", "cant admit", "my way or the highway"],
-    "decision":     ["decision", "decide", "choice", "choose", "dilemma", "what to do",
-                     "cant decide", "should i", "crossroads", "options", "hesitating", "torn",
-                     "conflicted", "indecisive", "ambivalent", "weighing", "pro and con",
-                     "flip a coin", "stuck between", "two minds", "paralysis of choice"],
-    "loneliness":   ["lonely", "alone", "isolated", "no one", "empty", "left out", "nobody",
-                     "solitude", "abandoned", "detached", "alienated", "friendless", "desolate",
-                     "unwanted", "outsider", "by myself", "unseen", "forgotten",
-                     "all by myself", "isolated", "nobody cares", "invisible", "no text messages"],
-}
+    "angry": [
+        "angry", "anger", "angered", "angrier", "angriest", "mad", "furious",
+        "furiously", "rage", "raging", "raged", "hateful", "hating", "hate",
+        "irritated", "irritate", "irritates", "irritating", "irritation",
+        "annoyed", "annoy", "annoys", "annoying", "annoyance", "frustrated",
+        "frustrate", "frustrates", "frustrating", "frustration", "outraged",
+        "outrage", "outraging", "bitter", "bitterness", "resentful", "resent",
+        "resented", "resenting", "hostile", "hostility", "aggravated",
+        "aggravate", "aggravating", "aggravation", "fuming", "seething",
+        "infuriated", "infuriate", "infuriating", "livid", "exasperated",
+        "exasperate", "exasperating", "displeased", "displease", "displeasure",
+        "triggered", "triggering", "enraged", "enrage", "enraging", "wrath",
+        "wrathful", "irritable", "irritability", "provoked", "provoking",
+        "provocation", "resentment", "aggressive", "aggression", "aggressively",
+        "ruthless", "vengeful", "vengeance", "spiteful", "spite", "vindictive",
+        "furiousness", "temperamental", "antagonistic", "belligerent",
+        "combative", "quarrelsome", "snapped", "shouted", "shouting",
+        "yelled", "yelling", "screamed", "screaming", "argued", "arguing"
+    ],
 
+    "sad": [
+        "sad", "sadder", "saddest", "sadness", "sadden", "saddened",
+        "saddening", "cry", "cries", "cried", "crying", "unhappy",
+        "unhappier", "unhappiest", "depressed", "depress", "depresses",
+        "depressing", "depression", "downcast", "miserable", "misery",
+        "tears", "tearful", "hopeless", "hopelessness", "grief", "grieving",
+        "grieved", "heartbroken", "heartbreaking", "gloomy", "gloominess",
+        "sorrow", "sorrowful", "sorrowing", "upset", "devastated",
+        "devastate", "devastating", "glum", "crestfallen", "despair",
+        "despairing", "despaired", "melancholy", "weeping", "low",
+        "hurting", "hurt", "hurtful", "broken", "emptiness", "empty",
+        "lonely", "loneliness", "forlorn", "woeful", "woe", "mourn",
+        "mourned", "mourning", "mournful", "lament", "lamented",
+        "lamenting", "regretful", "disappointed", "disappointing",
+        "disappointment", "discouraged", "discouraging", "discouragement",
+        "dejected", "dejection", "downhearted", "heavyhearted", "blue",
+        "tearfully", "painful", "painfully", "anguish", "anguished",
+        "suffering", "suffered", "suffer", "grieved", "desolate",
+        "desolation", "disheartened", "dishearten", "disheartening",
+        "heartache", "aching", "ache", "ached", "wistful", "wistfulness"
+    ],
+
+    "fear": [
+        "fear", "fears", "feared", "fearing", "fearful", "fearfully",
+        "fearless", "fearlessness", "scared", "scare", "scares", "scaring",
+        "afraid", "terrified", "terrify", "terrifies", "terrifying",
+        "terror", "terrorized", "terrorize", "terrifyingly", "panic",
+        "panicked", "panicking", "panicky", "worried", "worry", "worries",
+        "worrying", "anxious", "anxiety", "anxiously", "nervous",
+        "nervously", "nervousness", "dread", "dreads", "dreaded", "dreading",
+        "frightened", "frighten", "frightens", "frightening", "jittery",
+        "alarmed", "alarm", "alarming", "alarmed", "edgy", "paranoid",
+        "paranoia", "petrified", "petrify", "threatened", "threaten",
+        "threatening", "uneasy", "uneasiness", "apprehensive", "apprehension",
+        "timid", "timidity", "phobia", "phobic", "freaking", "doom",
+        "doomed", "foreboding", "forebodingly", "insecure", "insecurity",
+        "startled", "startle", "startling", "shaky", "shaking", "tremble",
+        "trembled", "trembling", "quivering", "quivered", "quiver",
+        "horrified", "horrify", "horrifying", "horror", "horrific",
+        "distressed", "distress", "distressing", "hesitant", "hesitancy",
+        "flustered", "flustering", "intimidated", "intimidate",
+        "intimidating", "intimidation", "alarmed", "apprehensively"
+    ],
+
+    "confused": [
+        "confused", "confuse", "confuses", "confusing", "confusion",
+        "confusingly", "lost", "unclear", "uncertain", "uncertainty",
+        "unsure", "unsureness", "puzzled", "puzzle", "puzzles", "puzzling",
+        "perplexed", "perplex", "perplexes", "perplexing", "perplexity",
+        "baffled", "baffle", "baffles", "baffling", "clueless",
+        "disoriented", "disorient", "disorienting", "befuddled", "befuddle",
+        "befuddling", "muddled", "muddle", "muddling", "mystified",
+        "mystify", "mystifies", "mystifying", "bewildered", "bewilder",
+        "bewildering", "bewilderment", "uncertainly", "ambiguous",
+        "ambiguity", "ambivalently", "ambivalent", "ambivalence",
+        "undecided", "indecisive", "indecision", "hesitant", "hesitate",
+        "hesitates", "hesitated", "hesitating", "doubtful", "doubt",
+        "doubts", "doubted", "doubting", "questioning", "questioned",
+        "uncertainly", "unresolved", "incomprehensible", "incomprehension",
+        "incomprehensible", "incomprehensibly", "unintelligible",
+        "unintelligibly", "disbelief", "disbelieving", "perplexingly",
+        "flustered", "fluster", "flusters", "flustering", "disconcerted",
+        "disconcerting", "disconcert", "confound", "confounded",
+        "confounding", "obscure", "obscured", "obscurity", "vague",
+        "vagueness", "uncertain"
+    ],
+
+    "stressed": [
+        "stress", "stresses", "stressed", "stressing", "stressful",
+        "stressfully", "pressure", "pressured", "pressuring", "pressurize",
+        "pressurized", "pressurizing", "overwhelmed", "overwhelm",
+        "overwhelms", "overwhelming", "overwhelmingly", "burnout",
+        "burned", "burning", "burnt", "tension", "tensions", "tense",
+        "tensed", "tensing", "strained", "strain", "strains", "straining",
+        "swamped", "swamp", "swamping", "burdened", "burden", "burdens",
+        "burdensome", "frazzled", "chaotic", "chaos", "chaotically",
+        "drowning", "crushing", "crushed", "crush", "piling", "exhausted",
+        "exhaust", "exhausts", "exhausting", "exhaustion", "fatigued",
+        "fatigue", "fatiguing", "fatiguingly", "overloaded", "overload",
+        "overloading", "overworked", "overwork", "overworking", "hectic",
+        "frantic", "frantically", "franticness", "pressing", "demanding",
+        "demanded", "demands", "taxing", "taxed", "tax", "taxes",
+        "troubled", "trouble", "troubles", "troubling", "agitated",
+        "agitate", "agitation", "restless", "restlessness", "frazzling",
+        "harried", "harrying", "rushed", "rushing", "hurried", "hurrying",
+        "burdening", "overextension", "overextended", "frustrated",
+        "juggling", "strained", "struggling", "struggled", "struggle"
+    ],
+
+    "demotivated": [
+        "demotivated", "demotivate", "demotivates", "demotivating",
+        "demotivation", "lazy", "lazier", "laziest", "laziness",
+        "unmotivated", "motivationless", "tired", "tire", "tires",
+        "tiring", "tiredness", "exhausted", "exhausting", "exhaustion",
+        "uninterested", "disinterested", "apathetic", "apathy", "apathetically",
+        "sluggish", "sluggishness", "drained", "drain", "drains", "draining",
+        "uninspired", "inspire", "inspires", "inspiring", "inspiration",
+        "fatigued", "fatigue", "fatiguing", "lethargic", "lethargy",
+        "listless", "listlessness", "inert", "inertia", "stagnant",
+        "stagnation", "procrastinate", "procrastinates", "procrastinated",
+        "procrastinating", "procrastination", "unproductive", "unproductively",
+        "unproductivity", "disengaged", "disengage", "disengaging",
+        "discouraged", "discourage", "discourages", "discouraging",
+        "slumped", "slumping", "slump", "stuck", "unenthusiastic",
+        "enthusiasm", "unwilling", "unwillingness", "passive", "passivity",
+        "indifferent", "indifference", "weary", "wearier", "weariest",
+        "weariness", "listlessly", "unambitious", "aimless", "aimlessness",
+        "apathetic", "hesitant", "hesitated", "hesitating", "avoiding",
+        "avoided", "avoid", "avoids", "neglecting", "neglected", "neglect",
+        "neglectful", "unfocused", "distracted", "distract", "distracting",
+        "distraction", "uncommitted", "disheartened", "disheartening"
+    ],
+
+    "guilt": [
+        "guilt", "guilty", "guiltily", "guiltiness", "sorry", "sorrowful",
+        "blame", "blames", "blamed", "blaming", "blameless", "blameworthy",
+        "regret", "regrets", "regretted", "regretting", "regretful",
+        "regretfully", "ashamed", "shame", "shames", "shamed", "shaming",
+        "shameful", "shamefully", "shameless", "shamelessly", "remorse",
+        "remorseful", "remorsefully", "conscience", "conscientious",
+        "penitent", "penitence", "penitently", "accountable", "accountability",
+        "selfblame", "selfblaming", "fault", "faulty", "faultless",
+        "faulting", "repent", "repents", "repented", "repenting",
+        "repentant", "repentance", "contrite", "contrition", "apologetic",
+        "apologetically", "apologize", "apologizes", "apologized",
+        "apologizing", "apology", "apologies", "atonement", "reproach",
+        "reproached", "reproaching", "selfreproach", "selfreproachful",
+        "culpable", "culpability", "culpably", "penance", "penitent",
+        "confession", "confessed", "confessing", "confess", "confesses",
+        "wrongdoing", "wrongdoer", "transgressed", "transgression",
+        "transgress", "transgressing", "remorsefully", "regretfully",
+        "repentant", "repentantly", "selfcritical", "selfcriticism",
+        "selfcondemnation", "condemned", "condemning", "condemn",
+        "condemns", "unforgiven", "unforgivable", "forgiveness",
+        "unforgiving"
+    ],
+
+    "attachment": [
+        "attachment", "attachments", "attached", "attaches", "attaching",
+        "attach", "detached", "detach", "detaches", "detaching",
+        "detachment", "miss", "misses", "missed", "missing",
+        "cling", "clings", "clung", "clinging", "clingy", "clinginess",
+        "dependent", "dependence", "dependency", "depending", "depended",
+        "obsessed", "obsess", "obsesses", "obsessing", "obsession",
+        "obsessional", "fixated", "fixate", "fixates", "fixating",
+        "fixation", "needy", "neediness", "codependent", "codependency",
+        "crave", "craves", "craved", "craving", "inseparable",
+        "hooked", "hook", "hooking", "reliant", "reliance", "rely",
+        "relies", "relied", "relying", "possessive", "possessiveness",
+        "possess", "possesses", "possessed", "possessing", "stalking",
+        "stalk", "stalks", "stalked", "addicted", "addiction", "addictive",
+        "longing", "longed", "long", "yearning", "yearn", "yearned",
+        "pining", "pined", "pine", "desperate", "desperation",
+        "infatuated", "infatuation", "infatuate", "devoted", "devotion",
+        "devote", "devotes", "devoting", "dependently", "overattached",
+        "overprotective", "overprotectiveness", "jealous", "jealousy",
+        "jealously", "covet", "covets", "coveted", "coveting",
+        "preoccupied", "preoccupation", "consumed", "consuming",
+        "yearned", "longingly", "insecurity", "insecure", "abandonment",
+        "abandoned", "abandon", "abandons", "abandoning"
+    ],
+
+    "failure": [
+        "failure", "failures", "fail", "fails", "failed", "failing",
+        "loser", "losers", "losing", "lost", "worthless", "worthlessness",
+        "useless", "uselessness", "inadequate", "inadequacy", "inadequately",
+        "disappointment", "disappointments", "disappointed", "disappoint",
+        "disappoints", "disappointing", "incompetent", "incompetence",
+        "incompetently", "flop", "flops", "flopped", "flopping",
+        "ruined", "ruin", "ruins", "ruining", "mistake", "mistakes",
+        "mistaken", "mistaking", "screwed", "screwup", "mess", "messed",
+        "messing", "imposter", "impostor", "imposters", "impostors",
+        "insecure", "insecurity", "incapable", "incapability",
+        "unqualified", "unsuccessful", "unsuccessfully", "unsuccessful",
+        "underachiever", "underachieving", "underachieved", "underachieve",
+        "defeated", "defeat", "defeats", "defeating", "defeatist",
+        "rejected", "reject", "rejects", "rejecting", "rejection",
+        "unaccomplished", "unfulfilled", "unrewarded", "ineffective",
+        "ineffectively", "ineffectiveness", "inefficient", "inefficiency",
+        "inability", "unable", "incapacitated", "flawed", "flaw",
+        "flaws", "flawedness", "mediocre", "mediocrity", "inferior",
+        "inferiority", "substandard", "disgraced", "disgrace",
+        "disgraceful", "humiliated", "humiliate", "humiliating",
+        "humiliation", "embarrassed", "embarrass", "embarrassing",
+        "embarrassment", "deficient", "deficiency", "lagging", "lagged",
+        "underperformed", "underperform", "underperforming"
+    ],
+
+    "relationship": [
+        "relationship", "relationships", "partner", "partners", "boyfriend",
+        "girlfriend", "friend", "friends", "friendship", "friendships",
+        "family", "familial", "love", "loved", "loving", "loves",
+        "loveless", "lovelessness", "lovable", "lovingly", "breakup",
+        "breakups", "crush", "crushes", "crushed", "crushing", "spouse",
+        "spouses", "marriage", "marriages", "married", "marrying",
+        "husband", "wife", "dating", "dated", "date", "dates", "ex",
+        "romance", "romantic", "romantically", "couple", "couples",
+        "fiance", "fiancee", "colleague", "colleagues", "relative",
+        "relatives", "toxic", "toxicity", "commitment", "committed",
+        "committing", "cheating", "cheated", "cheat", "cheats",
+        "heartbreak", "heartbroken", "heartbreaking", "betrayed",
+        "betray", "betrays", "betraying", "betrayal", "trust", "trusted",
+        "trusting", "trustworthy", "trustless", "distrust", "distrusted",
+        "distrusting", "jealous", "jealousy", "possessive", "possessiveness",
+        "neglected", "neglect", "neglecting", "neglectful", "ignored",
+        "ignore", "ignores", "ignoring", "rejected", "reject", "rejects",
+        "rejecting", "rejection", "separated", "separate", "separating",
+        "separation", "divorced", "divorce", "divorcing", "divorcee",
+        "reconcile", "reconciled", "reconciling", "reconciliation",
+        "affection", "affectionate", "affectionately", "intimacy",
+        "intimate", "intimately", "bond", "bonded", "bonding", "bonded",
+        "disagreement", "disagree", "disagreed", "disagreeing",
+        "argument", "arguments", "argue", "argues", "argued", "arguing",
+        "misunderstood", "misunderstand", "misunderstands",
+        "misunderstanding", "abusive", "abuse", "abused", "abusing",
+        "manipulative", "manipulation", "manipulated", "manipulating"
+    ],
+
+    "greed": [
+        "greed", "greedy", "greedier", "greediest", "greedily",
+        "greediness", "selfish", "selfishly", "selfishness", "possessive",
+        "possessiveness", "materialistic", "materialism", "covetous",
+        "covetously", "covetousness", "covet", "covets", "coveted",
+        "coveting", "hoarding", "hoard", "hoards", "hoarded", "grasping",
+        "insatiable", "insatiably", "gluttonous", "gluttony", "glutton",
+        "selfserving", "stingy", "stingier", "stingiest", "stinginess",
+        "powerhungry", "avarice", "avaricious", "avariciously", "acquisitive",
+        "acquisitiveness", "rapacious", "rapaciously", "rapacity",
+        "voracious", "voraciously", "voracity", "exploitative", "exploiting",
+        "exploited", "exploit", "exploits", "entitled", "entitlement",
+        "overindulgent", "overindulgence", "indulgent", "indulgence",
+        "consuming", "consumed", "consumption", "excessive", "excessively",
+        "excess", "extravagant", "extravagance", "extravagantly",
+        "lavish", "lavishly", "lavishness", "hoarder", "hoarders",
+        "grasped", "grasps", "grasp", "graspingly", "moneyhungry",
+        "wealthy", "wealth", "wealthier", "wealthiest", "profitseeking",
+        "profiteering", "profiteer", "profiteers", "exploitative",
+        "selfcentered", "selfcenteredness", "egocentric", "egocentrism",
+        "narrowminded", "uncharitable", "uncharitably", "ungenerous",
+        "ungenerously", "miserly", "miserliness", "avariciousness",
+        "rapaciousness", "acquisitive", "acquired", "acquiring"
+    ],
+
+    "purpose": [
+        "purpose", "purposes", "purposeful", "purposefully", "purposeless",
+        "purposelessness", "meaning", "meaningful", "meaningfully",
+        "meaningless", "meaninglessness", "goal", "goals", "goalless",
+        "direction", "directionless", "directionlessnes", "aimless",
+        "aimlessly", "aimlessness", "calling", "significance", "significant",
+        "insignificant", "insignificance", "emptiness", "empty", "emptied",
+        "empties", "emptying", "vacant", "vacancy", "pointless",
+        "pointlessness", "aim", "aims", "aimed", "aiming", "adrift",
+        "existential", "existence", "existing", "exist", "exists",
+        "existed", "existentially", "void", "hollow", "hollowness",
+        "fulfillment", "fulfilment", "fulfilled", "fulfilling", "fulfill",
+        "fulfills", "fulfil", "fulfils", "unfulfilled", "unfulfilling",
+        "unrealized", "unrealised", "realize", "realized", "realizing",
+        "realise", "realised", "realising", "aspiration", "aspirations",
+        "aspire", "aspires", "aspired", "aspiring", "vision", "visions",
+        "visionless", "directional", "misguided", "wandering", "wandered",
+        "wander", "wanders", "drifting", "drifted", "drift", "drifts",
+        "stagnant", "stagnation", "unmotivated", "unfocused", "lost",
+        "identity", "identityless", "meaningfully", "insignificantly",
+        "disconnected", "disconnection", "unanchored", "rootless",
+        "rootlessness", "unsettled", "aimlessly", "futile", "futility",
+        "futilely", "emptyhearted", "disillusioned", "disillusionment"
+    ],
+
+    "ego": [
+        "ego", "egos", "egoism", "egoist", "egoistic", "egotistical",
+        "egotism", "egotist", "egotistically", "pride", "proud", "prouder",
+        "proudest", "proudly", "arrogant", "arrogance", "arrogantly",
+        "superior", "superiority", "hubris", "selfimportance",
+        "conceited", "conceit", "conceitedly", "boastful", "boastfully",
+        "boast", "boasts", "boasted", "boasting", "stubborn", "stubbornly",
+        "stubbornness", "narcissistic", "narcissism", "narcissist",
+        "haughty", "haughtily", "haughtiness", "vain", "vanity", "vainly",
+        "knowitall", "selfcentered", "selfcenteredness", "selfabsorbed",
+        "selfabsorption", "selfish", "selfishly", "selfishness", "snobbish",
+        "snobbery", "snobbishly", "presumptuous", "presumption",
+        "presumptuously", "domineering", "domination", "dominate",
+        "dominates", "dominated", "dominating", "controlling", "control",
+        "controls", "controlled", "controlling", "authoritarian",
+        "dictatorial", "bossy", "bossiness", "imperious", "imperiously",
+        "overconfident", "overconfidence", "cocky", "cockiness",
+        "smug", "smugness", "smugly", "pompous", "pompously", "pomposity",
+        "pretentious", "pretentiously", "pretentiousness", "elitist",
+        "elitism", "condescending", "condescend", "condescended",
+        "condescension", "disdainful", "disdain", "disdainfully",
+        "dismissive", "dismissiveness", "intolerant", "intolerance",
+        "inflexible", "inflexibility", "opinionated", "dogmatic",
+        "dogmatism", "uncompromising", "uncompromisingly", "entitled",
+        "entitlement", "selfrighteous", "selfrighteously",
+        "selfrighteousness", "imperiousness", "boastfulness"
+    ],
+
+    "decision": [
+        "decision", "decisions", "decide", "decides", "decided", "deciding",
+        "decisive", "decisively", "decisiveness", "indecisive", "indecision",
+        "indecisively", "choice", "choices", "choose", "chooses", "chose",
+        "chosen", "choosing", "dilemma", "dilemmas", "hesitate", "hesitates",
+        "hesitated", "hesitating", "hesitation", "hesitant", "hesitancy",
+        "conflicted", "conflict", "conflicts", "conflicting", "ambivalent",
+        "ambivalence", "ambivalently", "weighing", "weighed", "weigh",
+        "weighs", "options", "optional", "option", "crossroads",
+        "uncertain", "uncertainty", "uncertainly", "doubt", "doubts",
+        "doubted", "doubting", "questioning", "questioned", "question",
+        "questions", "secondguessing", "secondguessed", "paralyzed",
+        "paralyze", "paralyzes", "paralyzing", "paralysis", "overthinking",
+        "overthought", "overthink", "overthinks", "overanalyzing",
+        "overanalyze", "overanalyzed", "overanalyzes", "evaluating",
+        "evaluated", "evaluate", "evaluates", "evaluation", "consider",
+        "considers", "considered", "considering", "contemplating",
+        "contemplated", "contemplate", "contemplates", "deliberate",
+        "deliberates", "deliberated", "deliberating", "deliberation",
+        "resolving", "resolved", "resolve", "resolves", "resolution",
+        "determining", "determined", "determine", "determines",
+        "unclear", "torn", "unsure", "undecided", "unresolved",
+        "perplexed", "puzzled", "ponder", "ponders", "pondered",
+        "pondering", "reflection", "reflect", "reflects", "reflected",
+        "reflecting", "prioritize", "prioritizes", "prioritized",
+        "prioritizing", "prefer", "prefers", "preferred", "preferring"
+    ],
+
+    "loneliness": [
+        "lonely", "lonelier", "loneliest", "loneliness", "alone",
+        "isolated", "isolate", "isolates", "isolating", "isolation",
+        "isolatedly", "empty", "emptiness", "excluded", "exclude",
+        "excludes", "excluding", "exclusion", "outcast", "outcasts",
+        "alienated", "alienate", "alienates", "alienating", "alienation",
+        "friendless", "desolate", "desolation", "unwanted", "outsider",
+        "outsiders", "unseen", "forgotten", "forget", "forgets",
+        "forgot", "forgetting", "invisible", "invisibility", "abandoned",
+        "abandon", "abandons", "abandoning", "abandonment", "detached",
+        "detach", "detaches", "detaching", "detachment", "disconnected",
+        "disconnect", "disconnects", "disconnecting", "disconnection",
+        "unloved", "loveless", "lovelessness", "unnoticed", "ignored",
+        "ignore", "ignores", "ignoring", "neglected", "neglect",
+        "neglects", "neglecting", "neglectful", "unimportant",
+        "unwelcome", "uninvited", "unaccepted", "unappreciated",
+        "unsupported", "helpless", "helplessness", "isolating",
+        "withdrawn", "withdraw", "withdraws", "withdrew", "withdrawing",
+        "rejected", "reject", "rejects", "rejecting", "rejection",
+        "friendlessness", "solitary", "solitude", "solitarily",
+        "unaccompanied", "forlorn", "forlornness", "deserted",
+        "desert", "deserts", "deserting", "forsaken", "forsake",
+        "forsakes", "forsaking", "estranged", "estrange", "estrangement",
+        "distant", "distance", "distanced", "distancing", "detached",
+        "unconnected", "disengaged", "disengage", "disengagement",
+        "unbelonging", "belongingless", "isolative", "unfriendly",
+        "friendlessness", "unnoticed", "unwantedness"
+    ]
+}
 
 
 SOLUTIONS = {
@@ -448,7 +758,6 @@ SOLUTIONS = {
 }
 
 
-
 def normalize(text: str) -> str:
     return text.lower().replace("'", "").replace("’", "")
 
@@ -461,12 +770,10 @@ def analyze(sentence: str) -> dict[str, int]:
         matched = False
         for kw in keywords:
             if " " in kw:
-                # Multi-word phrase: substring match
                 if kw in sentence:
                     matched = True
                     break
             else:
-                # Single word: whole-word match to avoid false positives
                 if re.search(r'\b' + re.escape(kw) + r'\b', sentence):
                     matched = True
                     break
@@ -483,7 +790,7 @@ def load_model():
     dataset = pd.read_excel(BASE_DIR / "dataset.xlsx")
     X_df = dataset.iloc[:, 9:].apply(pd.to_numeric, errors="coerce").fillna(0)
     X = X_df.values
-    Y = dataset.iloc[:, 4:7].astype(str).values
+    Y = dataset.iloc[:, 3:8].astype(str).values
     scaler = StandardScaler()
     X_scaled = scaler.fit_transform(X)
     classifier = KNeighborsClassifier(n_neighbors=1, metric="minkowski", p=2)
@@ -509,7 +816,6 @@ def solve(text: str):
     if hasattr(prediction, "tolist"):
         prediction = prediction.tolist()
 
-    # Build solutions with level based on (tag_score / total_value_emotions)
     total = sum(scores.values())
     matched_solutions = {}
     for tag, score in scores.items():
