@@ -7,15 +7,11 @@
   <title>{% block title %}Bhagavad Gita Insights{% endblock %}</title>
   <meta name="description" content="Reflect on your feelings through the wisdom of the Bhagavad Gita.">
 
-  <!-- Google Fonts for Typography & Devanagari Script -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&display=swap" rel="stylesheet">
 
   <style>
-    /* =========================================================
-       1. DESIGN TOKENS
-       ========================================================= */
     :root {
       --ink:          #1c1917;
       --ink-soft:     #44403c;
@@ -42,9 +38,6 @@
       --font-deva: "Noto Sans Devanagari", "Nirmala UI", "Mangal", sans-serif;
     }
 
-    /* =========================================================
-       2. RESET & PAGE SHELL
-       ========================================================= */
     *, *::before, *::after { box-sizing: border-box; }
 
     html { -webkit-text-size-adjust: 100%; }
@@ -80,9 +73,6 @@
 
     ::selection { background: rgba(217, 119, 6, 0.28); }
 
-    /* =========================================================
-       3. LAYOUT
-       ========================================================= */
     .page {
       width: 100%;
       display: flex;
@@ -112,9 +102,6 @@
       to   { opacity: 1; transform: translateY(0); }
     }
 
-    /* =========================================================
-       4. TYPOGRAPHY
-       ========================================================= */
     h1 {
       margin: 0 0 0.5rem;
       font-size: clamp(1.6rem, 5vw, 2.2rem);
@@ -135,9 +122,6 @@
       color: var(--muted);
     }
 
-    /* =========================================================
-       5. FORM
-       ========================================================= */
     .feeling-form {
       display: flex;
       flex-direction: column;
@@ -178,9 +162,6 @@
       background: #ffffff;
     }
 
-    /* =========================================================
-       6. BUTTONS
-       ========================================================= */
     button,
     .button {
       display: inline-flex;
@@ -221,9 +202,6 @@
       box-shadow: var(--ring);
     }
 
-    /* =========================================================
-       7. BACK BUTTON (pill)
-       ========================================================= */
     .back-button {
       display: inline-flex;
       align-items: center;
@@ -258,9 +236,6 @@
       box-shadow: var(--ring);
     }
 
-    /* =========================================================
-       8. RESULT PILL & INSIGHT LIST
-       ========================================================= */
     .result {
       margin: 1.25rem 0 0;
       padding: 0.75rem 1rem;
@@ -308,9 +283,6 @@
       line-height: 1.7;
     }
 
-    /* =========================================================
-       9. RESPONSIVE & ACCESSIBILITY
-       ========================================================= */
     @media (max-width: 640px) {
       body { background-attachment: scroll; }
     }
@@ -323,9 +295,6 @@
       }
     }
 
-    /* =========================================================
-       10. BACKGROUND MUSIC TOGGLE
-       ========================================================= */
     .music-toggle {
       position: fixed;
       right: clamp(0.75rem, 3vw, 1.5rem);
@@ -371,7 +340,6 @@
       .music-toggle .label { display: inline; }
     }
 
-    /* gentle pulse while muted, to hint there's music available */
     .music-toggle[data-state="muted"] { animation: musicHint 3.2s ease-in-out infinite; }
 
     @keyframes musicHint {
@@ -387,11 +355,9 @@
   {% block head %}{% endblock %}
 </head>
 <body>
-  <!-- Background music: starts muted (browser-safe), user un-mutes via the button -->
   <audio id="bg-music"
          src="/static/audio/background.mp3"
          loop
-         muted
          preload="auto"
          playsinline
          aria-hidden="true"></audio>
@@ -399,11 +365,11 @@
   <button type="button"
           id="music-toggle"
           class="music-toggle"
-          data-state="muted"
-          aria-pressed="false"
-          aria-label="Unmute background music">
-    <span class="icon" aria-hidden="true">🔇</span>
-    <span class="label">Music off</span>
+          data-state="playing"
+          aria-pressed="true"
+          aria-label="Mute background music">
+    <span class="icon" aria-hidden="true">🔊</span>
+    <span class="label">Music on</span>
   </button>
 
   {% block content %}{% endblock %}
@@ -418,7 +384,7 @@
 
     var KEY = 'bgMusicState';
     var store = null;
-    try {                       // sessionStorage may be blocked in private modes
+    try {
       window.sessionStorage.setItem('__probe', '1');
       window.sessionStorage.removeItem('__probe');
       store = window.sessionStorage;
@@ -436,7 +402,15 @@
     }
 
     var state = readState();
-    audio.muted = state.muted !== false;   // default: muted (browser-safe)
+
+    var prefMuted     = state.muted === true;
+    var fallbackMuted = false;
+
+    audio.volume = 1;
+
+    function applyMute() {
+      audio.muted = prefMuted || fallbackMuted;
+    }
 
     function paint() {
       var muted = audio.muted;
@@ -447,12 +421,11 @@
       btn.querySelector('.label').textContent = muted ? 'Music off' : 'Music on';
     }
 
-    function attemptPlay() {
+    function tryPlay() {
       var p = audio.play();
-      if (p && typeof p.catch === 'function') p.catch(function () { /* blocked until gesture */ });
+      return (p && typeof p.then === 'function') ? p : Promise.resolve();
     }
 
-    // ---- Resume where the last page left off, so it feels continuous ----
     function restoreTime() {
       var t = state.time;
       if (typeof t !== 'number' || !isFinite(t) || t <= 0) return;
@@ -461,25 +434,65 @@
     if (audio.readyState >= 1) restoreTime();
     else audio.addEventListener('loadedmetadata', restoreTime, { once: true });
 
-    attemptPlay();
+    applyMute();
     paint();
 
-    // ---- Fallback: if muted autoplay is still blocked, start on first gesture ----
-    ['pointerdown', 'keydown', 'touchstart'].forEach(function (evt) {
-      document.addEventListener(evt, attemptPlay, { once: true, passive: true });
-    });
+    tryPlay().catch(function () {
+      if (prefMuted) return;
 
-    // ---- Mute / unmute ----
-    btn.addEventListener('click', function () {
-      audio.muted = !audio.muted;
-      if (!audio.muted) attemptPlay();
-      writeState({ muted: audio.muted });
+      fallbackMuted = true;
+      applyMute();
       paint();
+      tryPlay().catch(function () {});
+      armGestureUnmute();
     });
 
-    // ---- Remember playback position before the page is torn down ----
+    var GESTURES = ['pointerdown', 'keydown', 'touchstart'];
+    var gestureArmed = false;
+
+    function armGestureUnmute() {
+      if (gestureArmed) return;
+      gestureArmed = true;
+      GESTURES.forEach(function (evt) {
+        document.addEventListener(evt, onFirstGesture, { passive: true });
+      });
+    }
+
+    function disarmGestureUnmute() {
+      if (!gestureArmed) return;
+      gestureArmed = false;
+      GESTURES.forEach(function (evt) {
+        document.removeEventListener(evt, onFirstGesture);
+      });
+    }
+
+    function onFirstGesture(e) {
+      if (btn === e.target || btn.contains(e.target)) return;
+
+      disarmGestureUnmute();
+      if (prefMuted || !fallbackMuted) return;
+
+      fallbackMuted = false;
+      applyMute();
+      paint();
+      tryPlay().catch(function () {});
+    }
+
+    btn.addEventListener('click', function () {
+      disarmGestureUnmute();
+
+      var turnOff = !audio.muted;
+      prefMuted     = turnOff;
+      fallbackMuted = false;
+      applyMute();
+      paint();
+
+      if (!turnOff) tryPlay().catch(function () {});
+      writeState({ muted: prefMuted });
+    });
+
     function persist() {
-      writeState({ muted: audio.muted, time: audio.currentTime || 0 });
+      writeState({ muted: prefMuted, time: audio.currentTime || 0 });
     }
     window.addEventListener('pagehide', persist);
     document.addEventListener('visibilitychange', function () {
